@@ -1,0 +1,53 @@
+paths:
+  log_file: "logs/training.log"
+  data_dir: "data"
+  dataset_file_name : "multilingual_dataset_final.tsv"
+  tokenizer_model: "tokenizer/spm_bharatnmt.model"
+  vocab_file: "tokenizer/spm_bharatnmt.vocab"
+  tokenizer_folder : "tokenizer"
+  tokenizer_model_prefix : tokenizer/spm_bharatnmt
+  tokenized_data_folder : "tokenized_data"
+  output_dir: "checkpoints/"
+  model_dir : models/
+  best_model_name: "best_model.pt"
+  checkpoint_paths: "checkpoints/epoch_{epoch}.pt"
+  
+
+
+dataset : 
+  total_sentence_pairs : 25_000_000
+  vocab_size : 50257
+  model_type : "bpe"
+
+training:
+  batch_size: 64
+  epochs: 3
+  lr: 0.0003
+  weight_decay: 0.01
+  warmup_steps: 100
+  patience: 2
+  max_length: 256
+  device: "cuda:1"
+  num_workers: 4
+  
+
+model:
+  vocab_size: 50257
+  max_position_embeddings: 256
+  encoder_layers: 12
+  decoder_layers: 12
+  encoder_attention_heads: 16
+  decoder_attention_heads: 16
+  d_model: 512
+  encoder_ffn_dim: 2048
+  decoder_ffn_dim: 2048
+  dropout: 0.2
+  attention_dropout: 0.1
+  activation_dropout: 0.1
+  pad_token_id: 0
+  bos_token_id: 2
+  eos_token_id: 3
+  forced_bos_token_id: null
+  scale_embedding: true
+  use_cache: false
+  activation_function: "gelu"
