@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anuvaad AI</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple animation for the loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-white">Anuvaad AI</h1>
+            <p class="text-gray-400 mt-1">Translate text between English, Hindi, Marathi, and Gujarati.</p>
+        </div>
+
+        <!-- Translation Interface -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <!-- Input Section -->
+            <div class="flex flex-col space-y-2">
+                <label for="source-lang" class="text-sm font-medium text-gray-300">From:</label>
+                <select id="source-lang" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="mr">Marathi</option>
+                    <option value="gu">Gujarati</option>
+                </select>
+                <textarea id="input-text" rows="8" class="block p-2.5 w-full text-sm text-gray-200 bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400" placeholder="Enter text to translate..."></textarea>
+            </div>
+
+            <!-- Output Section -->
+            <div class="flex flex-col space-y-2">
+                <label for="target-lang" class="text-sm font-medium text-gray-300">To:</label>
+                <select id="target-lang" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="hi">Hindi</option>
+                    <option value="en">English</option>
+                    <option value="mr">Marathi</option>
+                    <option value="gu">Gujarati</option>
+                </select>
+                <textarea id="output-text" rows="8" class="block p-2.5 w-full text-sm text-gray-300 bg-gray-900 rounded-lg border border-gray-600 cursor-not-allowed" placeholder="Translation will appear here..." readonly></textarea>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-4">
+            <button id="translate-btn" class="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center flex items-center justify-center transition-colors duration-200">
+                <span id="btn-text">Translate</span>
+                <div id="spinner" class="spinner hidden ml-2"></div>
+            </button>
+        </div>
+        
+        <!-- Error Message Box -->
+        <div id="error-box" class="hidden p-4 mt-4 text-sm text-red-400 bg-red-900/30 rounded-lg" role="alert">
+            <span class="font-medium">Error:</span> <span id="error-message"></span>
+        </div>
+    </div>
+
+    <script>
+        // Get references to all the HTML elements we need
+        const translateBtn = document.getElementById('translate-btn');
+        const btnText = document.getElementById('btn-text');
+        const spinner = document.getElementById('spinner');
+        const inputText = document.getElementById('input-text');
+        const outputText = document.getElementById('output-text');
+        const sourceLang = document.getElementById('source-lang');
+        const targetLang = document.getElementById('target-lang');
+        const errorBox = document.getElementById('error-box');
+        const errorMessage = document.getElementById('error-message');
+
+        // This is the URL where your local Python backend will be running
+        const backendUrl = 'http://127.0.0.1:5001/translate';
+
+        // Listen for clicks on the translate button
+        translateBtn.addEventListener('click', async () => {
+            const textToTranslate = inputText.value.trim();
+            const sourceLanguage = sourceLang.value;
+            const targetLanguage = targetLang.value;
+
+            // Basic validation
+            if (!textToTranslate) {
+                showError("Please enter some text to translate.");
+                return;
+            }
+            
+            if (sourceLanguage === targetLanguage) {
+                showError("Source and target languages cannot be the same.");
+                return;
+            }
+
+            // Show loading state
+            setLoading(true);
+            hideError();
+            outputText.value = 'Translating...';
+
+            try {
+                // Prepare the data to send to the backend
+                const payload = {
+                    text: textToTranslate,
+                    source_lang: sourceLanguage,
+                    target_lang: targetLanguage
+                };
+
+                // Make the API call to the backend
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                // Check if the request was successful
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                }
+
+                // Get the translated text from the response
+                const data = await response.json();
+                outputText.value = data.translated_text;
+
+            } catch (error) {
+                console.error('Translation Error:', error);
+                // Display a user-friendly error message
+                showError(`Could not connect to the translation server. Make sure your local Python server is running. Details: ${error.message}`);
+                outputText.value = ''; // Clear the output on error
+            } finally {
+                // Hide loading state
+                setLoading(false);
+            }
+        });
+
+        // Helper function to manage the loading state of the button
+        function setLoading(isLoading) {
+            if (isLoading) {
+                btnText.textContent = 'Translating...';
+                spinner.classList.remove('hidden');
+                translateBtn.disabled = true;
+                translateBtn.classList.add('cursor-not-allowed', 'opacity-70');
+            } else {
+                btnText.textContent = 'Translate';
+                spinner.classList.add('hidden');
+                translateBtn.disabled = false;
+                translateBtn.classList.remove('cursor-not-allowed', 'opacity-70');
+            }
+        }
+        
+        // Helper function to show an error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+
+        // Helper function to hide the error message
+        function hideError() {
+            errorBox.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>

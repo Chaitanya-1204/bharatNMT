@@ -213,6 +213,6 @@ tokenizer/
 tokenized_data/
 checkpoints/
 models/
-logs/ 
+
 data.ipynb
 training_logs.txt

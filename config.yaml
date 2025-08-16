@@ -15,7 +15,7 @@ paths:
 
 
 dataset : 
-  total_sentence_pairs : 25_000_000
+  total_sentence_pairs : 25_000_00
   vocab_size : 50257
   model_type : "bpe"
 
