@@ -63,8 +63,11 @@ def tokenize_dataset(config , df):
     """
     
     # Paths
+    
     TOKENIZER_MODEL_PATH = config["paths"]["tokenizer_model"]
     OUTPUT_DIR = config["paths"]["tokenized_data_folder"]
+    
+    
 
     # Load tokenizer
     log_msg("Loading the tokenizer model...", prefix="TOKENIZE_DATA")
